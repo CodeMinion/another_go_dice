@@ -1,24 +1,26 @@
 library another_go_dice;
 
+import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:another_ble_manager/another_ble_manager.dart';
 import 'package:flutter/painting.dart';
 
 /// A Calculator.
 class GoDice {
-  final String _dieServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  static const String _dieServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
 
   // Characteristic where the different readings are received from
-  final String _dieReceiveCharacteristicUuid =
+  static const String _dieReceiveCharacteristicUuid =
       "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
 
   // Characteristic where the different requests are made to.
-  final String _dieWriteCharacteristicUuid =
+  static const String _dieWriteCharacteristicUuid =
       "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
 
   //Dice vectors
-  final Map<int, _Vector3> _d6Vectors = {
+  static const Map<int, _Vector3> _d6Vectors = {
     1: _Vector3(-64, 0, 0),
     2: _Vector3(0, 0, 64),
     3: _Vector3(0, 64, 0),
@@ -27,7 +29,7 @@ class GoDice {
     6: _Vector3(64, 0, 0)
   };
 
-  final Map<int, _Vector3> _d20Vectors = {
+  static const Map<int, _Vector3> _d20Vectors = {
     1: _Vector3(-64, 0, -22),
     2: _Vector3(42, -42, 40),
     3: _Vector3(0, 22, -64),
@@ -50,7 +52,7 @@ class GoDice {
     20: _Vector3(64, 0, 22)
   };
 
-  final Map<int, _Vector3> _d24Vectors = {
+  static const Map<int, _Vector3> _d24Vectors = {
     1: _Vector3(20, -60, -20),
     2: _Vector3(20, 0, 60),
     3: _Vector3(-40, -40, 40),
@@ -78,7 +80,7 @@ class GoDice {
   };
 
   // Dice Transforms
-  final Map<int, int> _d10Transform = {
+  static const Map<int, int> _d10Transform = {
     1: 8,
     2: 2,
     3: 6,
@@ -101,7 +103,7 @@ class GoDice {
     20: 8,
   };
 
-  final Map<int, int> _d10XTransform = {
+  static const Map<int, int> _d10XTransform = {
     1: 80,
     2: 20,
     3: 60,
@@ -124,7 +126,7 @@ class GoDice {
     20: 80,
   };
 
-  final Map<int, int> _d4Transform = {
+  static const Map<int, int> _d4Transform = {
     1: 3,
     2: 1,
     3: 4,
@@ -151,7 +153,7 @@ class GoDice {
     24: 2
   };
 
-  final Map<int, int> _d8Transform = {
+  static const Map<int, int> _d8Transform = {
     1: 3,
     2: 3,
     3: 6,
@@ -178,7 +180,7 @@ class GoDice {
     24: 6
   };
 
-  final Map<int, int> _d12Transform = {
+  static const Map<int, int> _d12Transform = {
     1: 1,
     2: 2,
     3: 3,
@@ -204,6 +206,8 @@ class GoDice {
     23: 11,
     24: 12
   };
+
+  const GoDice();
 
   /// Returns a request for requesting the die color.
   /// This request has all the information needed to send
@@ -277,8 +281,13 @@ class GoDice {
 
 
   /// Callback function when die sends value, processes the data sent by die
-  GoDieMessage? processDieMessage(
+  IGoDieMessage? processDieMessage(
       {required DieType dieType, required Uint8List data}) {
+
+    if (data.isEmpty) {
+      return null;
+    }
+
     int firstByte = data[0];
 
     if (firstByte == 82) {
@@ -415,7 +424,7 @@ class _Vector3 {
   final int y;
   final int z;
 
-  _Vector3(this.x, this.y, this.z);
+  const _Vector3(this.x, this.y, this.z);
 
   int operator [](int position) {
     if (position == 0) {
@@ -432,9 +441,11 @@ class _Vector3 {
   String toString() => "$x,$y,$z";
 }
 
-abstract class GoDieMessage {}
+abstract class IGoDieMessage {}
 
-class GoColorMessage implements GoDieMessage {
+class GoDieMessageUnknown implements IGoDieMessage{}
+
+class GoColorMessage implements IGoDieMessage {
   final _Vector3 _color;
 
   GoColorMessage._({required _Vector3 color}) : _color = color;
@@ -446,7 +457,7 @@ class GoColorMessage implements GoDieMessage {
   int getB() => _color[1];
 }
 
-class GoBatteryMessage implements GoDieMessage {
+class GoBatteryMessage implements IGoDieMessage {
   final int _battery;
 
   GoBatteryMessage._({required int battReading}) : _battery = battReading;
@@ -454,7 +465,7 @@ class GoBatteryMessage implements GoDieMessage {
   int getBatteryReading() => _battery;
 }
 
-class GoDieRollMessage implements GoDieMessage {
+class GoDieRollMessage implements IGoDieMessage {
   final DieType _dieType;
   final int _value;
 
@@ -467,10 +478,12 @@ class GoDieRollMessage implements GoDieMessage {
   int getValue() => _value;
 }
 
-class GoDieRollingMessage implements GoDieMessage {
+class GoDieRollingMessage implements IGoDieMessage {
   final DieType _dieType;
-
   GoDieRollingMessage._({required DieType dieType}) : _dieType = dieType;
+
+  DieType getDie() => _dieType;
+
 }
 
 class GoDieRequest {
@@ -482,4 +495,37 @@ class GoDieRequest {
       {required this.serviceUuid,
       required this.characteristicUuid,
       required this.payload});
+}
+
+class BleGoDiceDeviceOwner extends BleDeviceOwner {
+  DieType _dieType = DieType.d6;
+  static const GoDice _goDice = GoDice();
+  BleGoDiceDeviceOwner({required super.device});
+
+  DieType getDieType() => _dieType;
+  void setDieType({required DieType dieType}) => _dieType = dieType;
+
+  /// Returns the name of the Prop
+  String getPropName() => device.getName();
+
+  /// Listen to die messages events
+  Stream<IGoDieMessage> getDieMessages() => getCharacteristicsChanges().map((event) {
+    if (event.serviceUuid == GoDice._dieServiceUuid && event.charUuid == GoDice._dieReceiveCharacteristicUuid) {
+      return _goDice.processDieMessage(dieType: _dieType, data: event.value) ?? GoDieMessageUnknown();
+    }
+    else {
+      return GoDieMessageUnknown();
+    }
+  });
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! BleGoDiceDeviceOwner) {
+      return false;
+    }
+    return device.getId() == other.device.getId();
+  }
+
+  @override
+  int get hashCode => device.getId().hashCode;
 }

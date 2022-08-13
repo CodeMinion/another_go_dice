@@ -9,7 +9,7 @@ void main() {
   test('Test GoDice', () {
     GoDice goDice = GoDice();
 
-    GoDieMessage? dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([82, 0,0,0]));
+    IGoDieMessage? dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([82, 0,0,0]));
     expect(dieMessage, isA<GoDieRollingMessage>());
 
 
