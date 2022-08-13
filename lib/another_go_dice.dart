@@ -508,7 +508,7 @@ class BleGoDiceDeviceOwner extends BleDeviceOwner {
       {required super.device,
       super.initCommands: const [
         // Used to start listening to the die events as soon as we are connected.
-        EnableCharacteristicCommand(
+        EnableCharacteristicNotificationCommand(
             serviceUuid: GoDice._dieServiceUuid,
             charUuid: GoDice._dieReceiveCharacteristicUuid)
       ]});
