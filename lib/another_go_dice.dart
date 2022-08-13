@@ -238,8 +238,8 @@ class GoDice {
   // :param led2: a list to control the 2nd LED in the following format '[R, G, B]'
   // where R, G, and B are numbers in the range of 0-255
   GoDieRequest getSetLedRequest(
-      {Color led1 = const Color.fromARGB(255, 0, 0, 0), Color led2 = const Color.fromARGB(255, 0, 0, 0)}) {
-
+      {Color led1 = const Color.fromARGB(255, 0, 0, 0),
+      Color led2 = const Color.fromARGB(255, 0, 0, 0)}) {
     Uint8List payload = Uint8List.fromList([
       8, // LED message identifier
       led1.red, led1.green, led1.blue,
@@ -256,8 +256,11 @@ class GoDice {
   // :param onTime: How much time to spend on (units of 10 ms)
   // :param offTime: How much time to spend off (units of 10 ms)
   // :param rgb: List of RGB values to set die to pulse to
-  GoDieRequest getPulseLedRequest({int pulseCount =1, int onTime = 10, int offTime = 10, required List<Color> colors}) {
-
+  GoDieRequest getPulseLedRequest(
+      {int pulseCount = 1,
+      int onTime = 10,
+      int offTime = 10,
+      required List<Color> colors}) {
     List<int> msgBytes = List.empty(growable: true);
     //LED pulse message identifier
     msgBytes.add(16);
@@ -279,11 +282,9 @@ class GoDice {
         payload: payload);
   }
 
-
   /// Callback function when die sends value, processes the data sent by die
   IGoDieMessage? processDieMessage(
       {required DieType dieType, required Uint8List data}) {
-
     if (data.isEmpty) {
       return null;
     }
@@ -443,7 +444,7 @@ class _Vector3 {
 
 abstract class IGoDieMessage {}
 
-class GoDieMessageUnknown implements IGoDieMessage{}
+class GoDieMessageUnknown implements IGoDieMessage {}
 
 class GoColorMessage implements IGoDieMessage {
   final _Vector3 _color;
@@ -480,10 +481,10 @@ class GoDieRollMessage implements IGoDieMessage {
 
 class GoDieRollingMessage implements IGoDieMessage {
   final DieType _dieType;
+
   GoDieRollingMessage._({required DieType dieType}) : _dieType = dieType;
 
   DieType getDie() => _dieType;
-
 }
 
 class GoDieRequest {
@@ -497,26 +498,40 @@ class GoDieRequest {
       required this.payload});
 }
 
+/// BLE Owner for usage along with another_ble_manager to handle
+/// the connection states of the BLE device.
 class BleGoDiceDeviceOwner extends BleDeviceOwner {
   DieType _dieType = DieType.d6;
   static const GoDice _goDice = GoDice();
-  BleGoDiceDeviceOwner({required super.device});
+
+  BleGoDiceDeviceOwner(
+      {required super.device,
+      super.initCommands: const [
+        // Used to start listening to the die events as soon as we are connected.
+        EnableCharacteristicCommand(
+            serviceUuid: GoDice._dieServiceUuid,
+            charUuid: GoDice._dieReceiveCharacteristicUuid)
+      ]});
 
   DieType getDieType() => _dieType;
+
   void setDieType({required DieType dieType}) => _dieType = dieType;
 
   /// Returns the name of the Prop
   String getPropName() => device.getName();
 
   /// Listen to die messages events
-  Stream<IGoDieMessage> getDieMessages() => getCharacteristicsChanges().map((event) {
-    if (event.serviceUuid == GoDice._dieServiceUuid && event.charUuid == GoDice._dieReceiveCharacteristicUuid) {
-      return _goDice.processDieMessage(dieType: _dieType, data: event.value) ?? GoDieMessageUnknown();
-    }
-    else {
-      return GoDieMessageUnknown();
-    }
-  });
+  Stream<IGoDieMessage> getDieMessages() =>
+      getCharacteristicsChanges().map((event) {
+        if (event.serviceUuid == GoDice._dieServiceUuid &&
+            event.charUuid == GoDice._dieReceiveCharacteristicUuid) {
+          return _goDice.processDieMessage(
+                  dieType: _dieType, data: event.value) ??
+              GoDieMessageUnknown();
+        } else {
+          return GoDieMessageUnknown();
+        }
+      });
 
   @override
   bool operator ==(Object other) {
