@@ -9,60 +9,60 @@ void main() {
   test('Test GoDice', () {
     GoDice goDice = GoDice();
 
-    IGoDieMessage? dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([82, 0,0,0]));
-    expect(dieMessage, isA<GoDieRollingMessage>());
+    IGoDiceMessage? dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([82, 0,0,0]));
+    expect(dieMessage, isA<GoDiceRollingMessage>());
 
 
     // 70-83-63-254-255 - Rolled 6
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([70,83,63,254,255]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    GoDieRollMessage rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    GoDiceRollMessage rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 6);
 
 
     // 70-83-63-252-2 -- Rolled 6
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([70,83,63,252,2]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 6);
 
     // 83-1-195-246 -- Rolled 4
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([83,1,195,246]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 4);
 
     // 83-2-193-253 -- Rolled 4
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([83,2,193,253]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 4);
 
     // 70-83-0-65-5 -- Rolled 3
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([70,83,0,65,5]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 3);
 
     // 83-192-1-4 -- Rolled 1
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([83,192,1,4]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 1);
 
     // 83-3-251-194 -- Rolled 5
     dieMessage = goDice.processDieMessage(dieType: DieType.d6, data: Uint8List.fromList([83,3,251,194]));
-    expect(dieMessage, isA<GoDieRollMessage>());
-    rolledMessage = dieMessage as GoDieRollMessage;
+    expect(dieMessage, isA<GoDiceRollMessage>());
+    rolledMessage = dieMessage as GoDiceRollMessage;
     expect(rolledMessage.getValue(), 5);
 
-    GoDieRequest colorRequest = goDice.getColorRequest();
+    GoDiceRequest colorRequest = goDice.getColorRequest();
     expect(colorRequest.payload[0], 23);
 
-    GoDieRequest batteryRequest = goDice.getBatteryRequest();
+    GoDiceRequest batteryRequest = goDice.getBatteryRequest();
     expect(batteryRequest.payload[0], 3);
 
-    GoDieRequest setColorRequest = goDice.getSetLedRequest(led1: Colors.blue);
+    GoDiceRequest setColorRequest = goDice.getSetLedRequest(led1: Colors.blue);
     expect(setColorRequest.payload[0], 8); // Has LED message indicator
     expect(setColorRequest.payload[1], Colors.blue.red);
     expect(setColorRequest.payload[2], Colors.blue.green);

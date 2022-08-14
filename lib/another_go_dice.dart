@@ -9,11 +9,10 @@ import 'package:flutter/painting.dart';
 
 /// A Calculator.
 class GoDice {
-  static const String _dieServiceUuid = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+  static const String _dieServiceUuid = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
 
   // Characteristic where the different readings are received from
-  static const String _dieReceiveCharacteristicUuid =
-      "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+  static const String _dieReceiveCharacteristicUuid = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";
 
   // Characteristic where the different requests are made to.
   static const String _dieWriteCharacteristicUuid =
@@ -212,10 +211,10 @@ class GoDice {
   /// Returns a request for requesting the die color.
   /// This request has all the information needed to send
   /// a request to the physical device.
-  GoDieRequest getColorRequest() {
+  GoDiceRequest getColorRequest() {
     Uint8List payload =
         Uint8List.fromList([(ByteData(1)..setInt8(0, 23)).getInt8(0)]);
-    return GoDieRequest(
+    return GoDiceRequest(
         serviceUuid: _dieServiceUuid,
         characteristicUuid: _dieWriteCharacteristicUuid,
         payload: payload);
@@ -223,10 +222,10 @@ class GoDice {
 
   /// Returns a request for requesting the
   /// battery level of the device.
-  GoDieRequest getBatteryRequest() {
+  GoDiceRequest getBatteryRequest() {
     Uint8List payload =
         Uint8List.fromList([(ByteData(1)..setInt8(0, 3)).getInt8(0)]);
-    return GoDieRequest(
+    return GoDiceRequest(
         serviceUuid: _dieServiceUuid,
         characteristicUuid: _dieWriteCharacteristicUuid,
         payload: payload);
@@ -237,7 +236,7 @@ class GoDice {
   //  where R, G, and B are numbers in the range of 0-255
   // :param led2: a list to control the 2nd LED in the following format '[R, G, B]'
   // where R, G, and B are numbers in the range of 0-255
-  GoDieRequest getSetLedRequest(
+  GoDiceRequest getSetLedRequest(
       {Color led1 = const Color.fromARGB(255, 0, 0, 0),
       Color led2 = const Color.fromARGB(255, 0, 0, 0)}) {
     Uint8List payload = Uint8List.fromList([
@@ -245,7 +244,7 @@ class GoDice {
       led1.red, led1.green, led1.blue,
       led2.red, led2.green, led2.blue
     ]);
-    return GoDieRequest(
+    return GoDiceRequest(
         serviceUuid: _dieServiceUuid,
         characteristicUuid: _dieWriteCharacteristicUuid,
         payload: payload);
@@ -256,7 +255,7 @@ class GoDice {
   // :param onTime: How much time to spend on (units of 10 ms)
   // :param offTime: How much time to spend off (units of 10 ms)
   // :param rgb: List of RGB values to set die to pulse to
-  GoDieRequest getPulseLedRequest(
+  GoDiceRequest getPulseLedRequest(
       {int pulseCount = 1,
       int onTime = 10,
       int offTime = 10,
@@ -276,14 +275,14 @@ class GoDice {
     msgBytes.add(0);
 
     Uint8List payload = Uint8List.fromList(msgBytes);
-    return GoDieRequest(
+    return GoDiceRequest(
         serviceUuid: _dieServiceUuid,
         characteristicUuid: _dieWriteCharacteristicUuid,
         payload: payload);
   }
 
   /// Callback function when die sends value, processes the data sent by die
-  IGoDieMessage? processDieMessage(
+  IGoDiceMessage? processDieMessage(
       {required DieType dieType, required Uint8List data}) {
     if (data.isEmpty) {
       return null;
@@ -293,7 +292,7 @@ class GoDice {
 
     if (firstByte == 82) {
       //Die is in rolling mode
-      return GoDieRollingMessage._(dieType: dieType);
+      return GoDiceRollingMessage._(dieType: dieType);
     } else {
       int secondByte = data[1];
       int thirdByte = data[2];
@@ -309,7 +308,7 @@ class GoDice {
         //Stable - S
         _Vector3 xyz = _getXyzFromBytes(data, 1);
         int rolledValue = _getRolledNumber(dieType, xyz);
-        return GoDieRollMessage(dieType: dieType, rollValue: rolledValue);
+        return GoDiceRollMessage(dieType: dieType, rollValue: rolledValue);
       } else if (secondByte == 83) {
         //Other stable events
         _Vector3 xyz = _getXyzFromBytes(data, 2);
@@ -317,13 +316,13 @@ class GoDice {
 
         if (firstByte == 70) {
           //Fake stable - FS
-          return GoDieRollMessage(dieType: dieType, rollValue: rolledValue);
+          return GoDiceRollMessage(dieType: dieType, rollValue: rolledValue);
         } else if (firstByte == 84) {
           //Tilt stable - TS
-          return GoDieRollMessage(dieType: dieType, rollValue: rolledValue);
+          return GoDiceRollMessage(dieType: dieType, rollValue: rolledValue);
         } else if (firstByte == 77) {
           //Move stable - MS
-          return GoDieRollMessage(dieType: dieType, rollValue: rolledValue);
+          return GoDiceRollMessage(dieType: dieType, rollValue: rolledValue);
         }
       }
     }
@@ -442,11 +441,11 @@ class _Vector3 {
   String toString() => "$x,$y,$z";
 }
 
-abstract class IGoDieMessage {}
+abstract class IGoDiceMessage {}
 
-class GoDieMessageUnknown implements IGoDieMessage {}
+class GoDiceMessageUnknown implements IGoDiceMessage {}
 
-class GoColorMessage implements IGoDieMessage {
+class GoColorMessage implements IGoDiceMessage {
   final _Vector3 _color;
 
   GoColorMessage._({required _Vector3 color}) : _color = color;
@@ -458,7 +457,7 @@ class GoColorMessage implements IGoDieMessage {
   int getB() => _color[1];
 }
 
-class GoBatteryMessage implements IGoDieMessage {
+class GoBatteryMessage implements IGoDiceMessage {
   final int _battery;
 
   GoBatteryMessage._({required int battReading}) : _battery = battReading;
@@ -466,11 +465,11 @@ class GoBatteryMessage implements IGoDieMessage {
   int getBatteryReading() => _battery;
 }
 
-class GoDieRollMessage implements IGoDieMessage {
+class GoDiceRollMessage implements IGoDiceMessage {
   final DieType _dieType;
   final int _value;
 
-  GoDieRollMessage({required DieType dieType, required int rollValue})
+  GoDiceRollMessage({required DieType dieType, required int rollValue})
       : _dieType = dieType,
         _value = rollValue;
 
@@ -479,20 +478,20 @@ class GoDieRollMessage implements IGoDieMessage {
   int getValue() => _value;
 }
 
-class GoDieRollingMessage implements IGoDieMessage {
+class GoDiceRollingMessage implements IGoDiceMessage {
   final DieType _dieType;
 
-  GoDieRollingMessage._({required DieType dieType}) : _dieType = dieType;
+  GoDiceRollingMessage._({required DieType dieType}) : _dieType = dieType;
 
   DieType getDie() => _dieType;
 }
 
-class GoDieRequest {
+class GoDiceRequest {
   final String serviceUuid;
   final String characteristicUuid;
   final Uint8List payload;
 
-  GoDieRequest(
+  GoDiceRequest(
       {required this.serviceUuid,
       required this.characteristicUuid,
       required this.payload});
@@ -503,6 +502,8 @@ class GoDieRequest {
 class BleGoDiceDeviceOwner extends BleDeviceOwner {
   DieType _dieType = DieType.d6;
   static const GoDice _goDice = GoDice();
+
+  IGoDiceMessage ? _prevGoDiceMessage;
 
   BleGoDiceDeviceOwner(
       {required super.device,
@@ -521,18 +522,23 @@ class BleGoDiceDeviceOwner extends BleDeviceOwner {
   String getPropName() => device.getName();
 
   /// Listen to die messages events
-  Stream<IGoDieMessage> getDieMessages() =>
+  Stream<IGoDiceMessage> getDieMessages() =>
       getCharacteristicsChanges().map((event) {
-        if (event.serviceUuid == GoDice._dieServiceUuid &&
-            event.charUuid == GoDice._dieReceiveCharacteristicUuid) {
-          return _goDice.processDieMessage(
+        print ("Got Characteristic Change!");
+        IGoDiceMessage message;
+        if (event.serviceUuid.toUpperCase() == GoDice._dieServiceUuid &&
+            event.charUuid.toUpperCase() == GoDice._dieReceiveCharacteristicUuid) {
+          message = _goDice.processDieMessage(
                   dieType: _dieType, data: event.value) ??
-              GoDieMessageUnknown();
+              GoDiceMessageUnknown();
         } else {
-          return GoDieMessageUnknown();
+          message = GoDiceMessageUnknown();
         }
+        _prevGoDiceMessage = message;
+        return message;
       });
 
+  IGoDiceMessage? getLastMessage() => _prevGoDiceMessage;
   @override
   bool operator ==(Object other) {
     if (other is! BleGoDiceDeviceOwner) {
