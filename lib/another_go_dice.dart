@@ -502,6 +502,7 @@ class GoDiceRequest {
 class BleGoDiceDeviceOwner extends BleDeviceOwner {
   DieType _dieType = DieType.d6;
   static const GoDice _goDice = GoDice();
+  final GoDiceDeviceInfo _goDiceDeviceInfo;
 
   IGoDiceMessage ? _prevGoDiceMessage;
 
@@ -512,7 +513,7 @@ class BleGoDiceDeviceOwner extends BleDeviceOwner {
         EnableCharacteristicNotificationCommand(
             serviceUuid: GoDice._dieServiceUuid,
             charUuid: GoDice._dieReceiveCharacteristicUuid)
-      ]});
+      ]}):_goDiceDeviceInfo = GoDiceDeviceInfo(device: device);
 
   DieType getDieType() => _dieType;
 
@@ -549,4 +550,72 @@ class BleGoDiceDeviceOwner extends BleDeviceOwner {
 
   @override
   int get hashCode => device.getId().hashCode;
+
+  ///
+  /// Returns the Color of the pips in the die.
+  GoDicePhysicalColor get dicePhysicalColor => _goDiceDeviceInfo.color;
+
+  ///
+  /// Returns the version of the die as present in the device name.
+  String get version => _goDiceDeviceInfo.version;
+
+}
+
+class GoDiceDeviceInfo {
+  final GoDicePhysicalColor color;
+  final String last4Mac;
+  final String version;
+
+  const GoDiceDeviceInfo._({ required this.version, required this.color, required this.last4Mac});
+
+  ///
+  /// On GoDice the device name is composed of 4 parts separated by "_"
+  /// 1 - GoDice
+  /// 2 - Last 6 digits of the mac address.
+  /// 3 - Character representing the color of the pips on the die (O,R,G,Y,B,K)
+  /// 4 - Version (v03)
+  factory GoDiceDeviceInfo({required IBleDevice device}) {
+
+    String deviceName = device.getName();
+
+    if(!deviceName.startsWith("GoDice")) {
+      return GoDiceDeviceInfo._(version: "", color: GoDicePhysicalColor.unknown, last4Mac: "");
+    }
+
+    List<String> nameParts = device.getName().split("_");
+    String last4Mac = nameParts[1];
+    String colorStr = nameParts[2];
+    String version = nameParts[3];
+
+    GoDicePhysicalColor color = GoDicePhysicalColor.unknown;
+    if (colorStr.toUpperCase() == "O") {
+      color = GoDicePhysicalColor.orange;
+    }
+    else if (colorStr.toUpperCase() == "R") {
+      color = GoDicePhysicalColor.red;
+    }
+    else if (colorStr.toUpperCase() == "G") {
+      color = GoDicePhysicalColor.green;
+    }
+    else if (colorStr.toUpperCase() == "B") {
+      color = GoDicePhysicalColor.blue;
+    }
+    else if (colorStr.toUpperCase() == "Y") {
+      color = GoDicePhysicalColor.yellow;
+    }
+    else if (colorStr.toUpperCase() == "K") {
+      color = GoDicePhysicalColor.black;
+    }
+    return GoDiceDeviceInfo._(version: version, color: color, last4Mac: last4Mac);
+  }
+}
+
+enum GoDicePhysicalColor {
+  unknown,
+  orange,
+  blue,
+  yellow,
+  black,
+  green,
+  red,
 }
