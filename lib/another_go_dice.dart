@@ -16,7 +16,7 @@ class GoDice {
 
   // Characteristic where the different requests are made to.
   static const String _dieWriteCharacteristicUuid =
-      "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+      "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";
 
   //Dice vectors
   static const Map<int, _Vector3> _d6Vectors = {
@@ -259,18 +259,18 @@ class GoDice {
       {int pulseCount = 1,
       int onTime = 10,
       int offTime = 10,
-      required List<Color> colors}) {
+      required Color color}) {
     List<int> msgBytes = List.empty(growable: true);
     //LED pulse message identifier
     msgBytes.add(16);
     msgBytes.add(pulseCount);
     msgBytes.add(onTime);
     msgBytes.add(offTime);
-    for (var color in colors) {
+    //for (var color in colors) {
       msgBytes.add(color.red);
       msgBytes.add(color.green);
       msgBytes.add(color.blue);
-    }
+    //}
     msgBytes.add(1);
     msgBytes.add(0);
 
@@ -559,6 +559,29 @@ class BleGoDiceDeviceOwner extends BleDeviceOwner {
   /// Returns the version of the die as present in the device name.
   String get version => _goDiceDeviceInfo.version;
 
+  ///
+  /// Pulses the led of the die.
+  ///
+  void pulseLed(
+      {int pulseCount = 1,
+        int onTime = 10,
+        int offTime = 10,
+        required Color color}) {
+    GoDiceRequest request = _goDice.getPulseLedRequest(color: color, onTime: onTime, offTime: offTime, pulseCount: pulseCount);
+    BleWriteCharacteristicEvent requestEvent = BleWriteCharacteristicEvent(device: device, serviceUuid: request.serviceUuid, charUuid: request.characteristicUuid, value: request.payload);
+    getFsm()?.handleEvent(event: requestEvent);
+  }
+
+  ///
+  /// Sets the color of the two LEDs in the die.
+  ///
+  void setLed(
+      {Color led1 = const Color.fromARGB(255, 0, 0, 0),
+        Color led2 = const Color.fromARGB(255, 0, 0, 0)}) {
+    GoDiceRequest request = _goDice.getSetLedRequest(led1: led1, led2: led2);
+    BleWriteCharacteristicEvent requestEvent = BleWriteCharacteristicEvent(device: device, serviceUuid: request.serviceUuid, charUuid: request.characteristicUuid, value: request.payload);
+    getFsm()?.handleEvent(event: requestEvent);
+  }
 }
 
 class GoDiceDeviceInfo {

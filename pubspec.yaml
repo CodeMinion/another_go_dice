@@ -1,6 +1,6 @@
 name: another_go_dice
 description: Flutter package for interfacing with GoDice
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/CodeMinion/another_go_dice
 
 environment:
